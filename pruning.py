@@ -50,7 +50,7 @@ else:
     print('Not using CUDA!!!')
 
 # Loader
-kwargs = {'num_workers': 5, 'pin_memory': True} if use_cuda else {}
+kwargs = {'num_workers': 4} if use_cuda else {}
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=True, download=True,
                    transform=transforms.Compose([transforms.Resize(64),transforms.ToTensor()])),
