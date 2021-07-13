@@ -75,6 +75,7 @@ def train(epochs):
     model.train()
     for epoch in range(epochs):
         pbar = tqdm(enumerate(train_loader), total=len(train_loader))
+        
         for batch_idx, (data, target) in pbar:
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
@@ -120,15 +121,15 @@ def test():
 print("--- Initial training ---")
 train(args.epochs)
 accuracy = test()
-util.log(args.log, f"initial_accuracy {accuracy}")
-torch.save(model, f"saves/net.pth")
+print(f"initial_accuracy {accuracy}")
+torch.save(model.state_dict(), f"saves/net2.pth")
 print("--- Before pruning ---")
 util.print_nonzeros(model)
 
 # Pruning
 model.prune_by_std(args.sensitivity)
 accuracy = test()
-util.log(args.log, f"accuracy_after_pruning {accuracy}")
+print(f"accuracy_after_pruning {accuracy}")
 print("--- After pruning ---")
 util.print_nonzeros(model)
 
@@ -136,9 +137,9 @@ util.print_nonzeros(model)
 print("--- Retraining ---")
 optimizer.load_state_dict(initial_optimizer_state_dict) # Reset the optimizer
 train(args.epochs)
-torch.save(model, f"saves/model_compressed.pth")
+torch.save(model.state_dict(), f"saves/model_compressed.pth")
 accuracy = test()
-util.log(args.log, f"accuracy_after_retraining {accuracy}")
+print(f"accuracy_after_retraining {accuracy}")
 
 print("--- After Retraining ---")
 util.print_nonzeros(model)
