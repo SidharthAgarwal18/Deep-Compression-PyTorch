@@ -9,7 +9,7 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from tqdm import tqdm
 
-from net.models import LeNet
+from net.models import LeNet, LeNet_5
 from net.quantization import apply_weight_sharing
 import util
 
@@ -53,21 +53,16 @@ else:
 kwargs = {'num_workers': 5, 'pin_memory': True} if use_cuda else {}
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=True, download=True,
-                   transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
+                   transform=transforms.Compose([transforms.Resize(64),transforms.ToTensor()])),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('data', train=False, transform=transforms.Compose([
-                       transforms.ToTensor(),
-                       transforms.Normalize((0.1307,), (0.3081,))
-                   ])),
+    datasets.MNIST('data', train=False,
+                    transform=transforms.Compose([transforms.Resize(64),transforms.ToTensor()])),
     batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
 
 # Define which model to use
-model = LeNet(mask=True).to(device)
+model = LeNet_5(mask=True).to(device)
 
 print(model)
 util.print_model_parameters(model)
