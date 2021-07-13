@@ -6,7 +6,7 @@ from net.huffmancoding import huffman_encode_model
 import util
 
 parser = argparse.ArgumentParser(description='Huffman encode a quantized model')
-parser.add_argument('model', type=str, help='saved quantized model')
+parser.add_argument('model', type=str,default = 'saves/model_after_weight_sharing.pth', help='saved quantized model')
 parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA')
 args = parser.parse_args()
 

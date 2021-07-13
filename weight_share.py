@@ -8,10 +8,10 @@ from net.quantization import apply_weight_sharing
 import util
 
 parser = argparse.ArgumentParser(description='This program quantizes weight by using weight sharing')
-parser.add_argument('model', type=str, help='path to saved pruned model')
+parser.add_argument('model', type=str,default='saves/net2.pth', help='path to saved pruned model')
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='disables CUDA training')
-parser.add_argument('--output', default='saves/model_after_weight_sharing.ptmodel', type=str,
+parser.add_argument('--output', default='saves/model_after_weight_sharing.pth', type=str,
                     help='path to model output')
 args = parser.parse_args()
 
