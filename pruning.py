@@ -81,18 +81,18 @@ if args.wmFtune:
     
     total_dims = len(watermark["inner_img"])
     samples_per_dim = watermark["inner_img"][0].shape[0]
-    zeros = torch.zeros(1,1,64,64)
-
+    zeros = torch.zeros(1,1,64,64).to(device)
+    
     for dim in range(total_dims):
         for sample in range(samples_per_dim):
-            if not torch.equal(zeros,watermark["inner_img"][dim][sample]):
+            if not torch.equal(zeros,watermark["inner_img"][dim][sample].to(device)):
                 wminputs.append((watermark["inner_img"][dim][sample]).to(device))
-                wmtargets.append((watermark["inner_pred"][dim][sample]).to(device))
+                wmtargets.append(((watermark["inner_pred"][dim][sample]).to(device)).unsqueeze(0).long())
 
-            if not torch.equal(zeros,watermark["outer_img"][dim][sample]):
+            if not torch.equal(zeros,watermark["outer_img"][dim][sample].to(device)):
                 wminputs.append((watermark["outer_img"][dim][sample]).to(device))
-                wmtargets.append((watermark["outer_pred"][dim][sample]).to(device))
-    print("Total watermarks fine tuned on are : "+str(len(wminputs)))
+                wmtargets.append(((watermark["outer_pred"][dim][sample]).to(device)).unsqueeze(0).long())
+    print("\n\nTotal watermarks fine tuned on are : "+str(len(wminputs))+"\n\n")
 
 
 def train(epochs,wmFineTune = False,wminputs = [],wmtargets = []):
@@ -100,7 +100,9 @@ def train(epochs,wmFineTune = False,wminputs = [],wmtargets = []):
     for epoch in range(epochs):
 
         pbar = tqdm(enumerate(train_loader), total=len(train_loader))
-        wm_idx = np.random.randint(len(wminputs))
+        
+        if wmFineTune:
+            wm_idx = np.random.randint(len(wminputs))
 
         for batch_idx, (data, target) in pbar:
             data, target = data.to(device), target.to(device)
