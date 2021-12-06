@@ -35,6 +35,7 @@ parser.add_argument('--log', type=str, default='log.txt',
                     help='log file name')
 parser.add_argument('--sensitivity', type=float, default=2,
                     help="sensitivity value that is multiplied to layer's std in order to get threshold value")
+parser.add_argument('--wmFtune',type = bool,default  = False,help = "If you want to fine tune on wms")
 args = parser.parse_args()
 
 # Control Seed
@@ -71,13 +72,43 @@ util.print_model_parameters(model)
 optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=0.0001)
 initial_optimizer_state_dict = optimizer.state_dict()
 
-def train(epochs):
+
+wminputs = []
+wmtargets = []
+
+if args.wmFtune:
+    watermark = torch.load("watermark.pth",map_location = device)
+    
+    total_dims = len(watermark["inner_img"])
+    samples_per_dim = watermark["inner_img"][0].shape[0]
+    zeros = torch.zeros(1,1,64,64)
+
+    for dim in total_dims:
+        for sample in samples_per_dim:
+            if not torch.equal(zeros,watermark["inner_img"][dim][sample]):
+                wminputs.append((watermark["inner_img"][dim][sample]).to(device))
+                wmtargets.append((watermark["inner_pred"][dim][sample]).to(device))
+
+            if not torch.equal(zeros,watermark["outer_img"][dim][sample]):
+                wminputs.append((watermark["outer_img"][dim][sample]).to(device))
+                wmtargets.append((watermark["outer_pred"][dim][sample]).to(device))
+    print("Total watermarks fine tuned on are : "+str(len(wminputs)))
+
+
+def train(epochs,wmFineTune = False,wminputs = [],wmtargets = []):
     model.train()
     for epoch in range(epochs):
+
         pbar = tqdm(enumerate(train_loader), total=len(train_loader))
-        
+        wm_idx = np.random.randint(len(wminputs))
+
         for batch_idx, (data, target) in pbar:
             data, target = data.to(device), target.to(device)
+
+            if wmFineTune:
+                data = torch.cat([data, wminputs[(wm_idx + batch_idx) % len(wminputs)]], dim=0)
+                target = torch.cat([target, wmtargets[(wm_idx + batch_idx) % len(wmtargets)]], dim=0)
+
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
@@ -136,7 +167,7 @@ util.print_nonzeros(model)
 # Retrain
 print("--- Retraining ---")
 optimizer.load_state_dict(initial_optimizer_state_dict) # Reset the optimizer
-train(args.epochs)
+train(args.epochs,args.wmFtune,wminputs,wmtargets)
 torch.save(model.state_dict(), f"saves/model_compressed.pth")
 accuracy = test()
 print(f"accuracy_after_retraining {accuracy}")
