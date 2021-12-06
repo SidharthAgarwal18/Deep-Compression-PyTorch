@@ -83,8 +83,8 @@ if args.wmFtune:
     samples_per_dim = watermark["inner_img"][0].shape[0]
     zeros = torch.zeros(1,1,64,64)
 
-    for dim in total_dims:
-        for sample in samples_per_dim:
+    for dim in range(total_dims):
+        for sample in range(samples_per_dim):
             if not torch.equal(zeros,watermark["inner_img"][dim][sample]):
                 wminputs.append((watermark["inner_img"][dim][sample]).to(device))
                 wmtargets.append((watermark["inner_pred"][dim][sample]).to(device))
